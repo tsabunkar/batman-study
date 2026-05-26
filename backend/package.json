@@ -1,0 +1,11 @@
+{
+  "name": "batman-analytics-lambda",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Lambda function for tracking play button clicks",
+  "main": "handler.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.400.0",
+    "@aws-sdk/lib-dynamodb": "^3.400.0"
+  }
+}

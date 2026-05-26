@@ -16,6 +16,17 @@ https://d2sp3xp56r8kh5.cloudfront.net/
 - Static deployment to AWS S3
 - Global CDN delivery with CloudFront
 - SPA-friendly routing with `index.html` fallback
+- **User analytics tracking** with IP-based click counting via Lambda + DynamoDB
+
+## Analytics
+
+This app includes built-in analytics to track play button clicks. Each user (by IP address) is counted with:
+
+- Click count on play button
+- First visit timestamp
+- Last click timestamp
+
+See [ANALYTICS.md](ANALYTICS.md) for detailed setup and deployment instructions.
 
 ## Local development
 

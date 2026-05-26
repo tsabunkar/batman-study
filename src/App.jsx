@@ -3,6 +3,9 @@ import "./App.css";
 import batmanImg from "../batman_study.png";
 
 const YOUTUBE_VIDEO_ID = "ZkfZvz_2bPE";
+const ANALYTICS_API_ENDPOINT =
+  import.meta.env.VITE_ANALYTICS_API ||
+  "https://your-api-gateway-url.execute-api.region.amazonaws.com/prod";
 
 // Visualizer bar config
 const BARS = Array.from({ length: 24 }, (_, i) => ({
@@ -78,6 +81,13 @@ function App() {
       playerRef.current.pauseVideo();
       setIsPlaying(false);
     } else {
+      // Track play button click
+      fetch(`${ANALYTICS_API_ENDPOINT}/track`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      }).catch((err) => console.error("Analytics tracking failed:", err));
+
       playerRef.current.playVideo();
       setIsPlaying(true);
     }

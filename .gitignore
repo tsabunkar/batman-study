@@ -1,5 +1,7 @@
 # Node.js
 node_modules/
+backend/node_modules/
+backend/lambda.zip
 pnpm-lock.yaml
 yarn.lock
 package-lock.json
@@ -15,6 +17,7 @@ dist/
 
 # Terraform
 infra/.terraform/
+infra/lambda.zip
 *.tfstate
 *.tfstate.*
 .terraform.lock.hcl

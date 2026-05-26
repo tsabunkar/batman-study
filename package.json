@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "cd infra && terraform init && terraform apply -auto-approve"
+    "deploy": "rm -rf dist backend/node_modules infra/lambda.zip && cd backend && npm install --production && zip -r ../infra/lambda.zip handler.js package.json node_modules/ && cd ../infra && terraform init && terraform apply -auto-approve"
   },
   "dependencies": {
     "react": "^18.2.0",

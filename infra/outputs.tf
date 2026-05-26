@@ -17,3 +17,18 @@ output "cloudfront_domain_name" {
   description = "CloudFront domain name — your live website URL"
   value       = "https://${aws_cloudfront_distribution.website.domain_name}"
 }
+
+output "analytics_api_endpoint" {
+  description = "API Gateway endpoint for analytics tracking"
+  value       = aws_apigatewayv2_stage.analytics_stage.invoke_url
+}
+
+output "dynamodb_table_name" {
+  description = "DynamoDB table name for storing analytics"
+  value       = aws_dynamodb_table.play_analytics.name
+}
+
+output "dynamodb_table_arn" {
+  description = "DynamoDB table ARN"
+  value       = aws_dynamodb_table.play_analytics.arn
+}
