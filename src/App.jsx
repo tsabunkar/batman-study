@@ -131,6 +131,136 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handlePlayPause]);
 
+  const STICKY_TEXT_KEY = "batman_protocol_text";
+  const STICKY_POS_KEY = "batman_protocol_pos";
+  const defaultStickyText = `Train Strength
+Learn to be Bored (Discipline)
+Skill Stacking
+Control your inner Joker
+Silence`;
+  const defaultStickyPosition = { x: 20, y: 20 };
+
+  const [stickyText, setStickyText] = useState(() => {
+    try {
+      return localStorage.getItem(STICKY_TEXT_KEY) || defaultStickyText;
+    } catch (e) {
+      return defaultStickyText;
+    }
+  });
+  const [stickyPosition, setStickyPosition] = useState(() => {
+    try {
+      const raw = localStorage.getItem(STICKY_POS_KEY);
+      return raw ? JSON.parse(raw) : defaultStickyPosition;
+    } catch (e) {
+      return defaultStickyPosition;
+    }
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    origX: 0,
+    origY: 0,
+  });
+  const textareaRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STICKY_TEXT_KEY, stickyText);
+    } catch (e) {
+      // ignore
+    }
+  }, [stickyText]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STICKY_POS_KEY, JSON.stringify(stickyPosition));
+    } catch (e) {
+      // ignore
+    }
+  }, [stickyPosition]);
+
+  const handleDragStart = useCallback(
+    (event) => {
+      if (isEditing) return;
+      const target = event.target;
+      if (target.closest && target.closest(".sticky-textarea")) return;
+
+      const pageX =
+        event.type === "touchstart" ? event.touches[0].pageX : event.pageX;
+      const pageY =
+        event.type === "touchstart" ? event.touches[0].pageY : event.pageY;
+
+      dragRef.current = {
+        active: true,
+        startX: pageX,
+        startY: pageY,
+        origX: stickyPosition.x,
+        origY: stickyPosition.y,
+      };
+      setIsDragging(true);
+    },
+    [stickyPosition, isEditing],
+  );
+
+  const handleDragMove = useCallback((event) => {
+    if (!dragRef.current.active) return;
+    const pageX =
+      event.type === "touchmove" ? event.touches[0].pageX : event.pageX;
+    const pageY =
+      event.type === "touchmove" ? event.touches[0].pageY : event.pageY;
+    const deltaX = pageX - dragRef.current.startX;
+    const deltaY = pageY - dragRef.current.startY;
+    setStickyPosition((pos) => ({
+      x: Math.max(
+        8,
+        Math.min(window.innerWidth - 170, dragRef.current.origX + deltaX),
+      ),
+      y: Math.max(
+        8,
+        Math.min(window.innerHeight - 220, dragRef.current.origY + deltaY),
+      ),
+    }));
+  }, []);
+
+  const stopDrag = useCallback(() => {
+    if (!dragRef.current.active) return;
+    dragRef.current.active = false;
+    setIsDragging(false);
+  }, []);
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (dragRef.current.active) {
+        handleDragMove(e);
+      }
+    };
+    const onRelease = () => stopDrag();
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("mouseup", onRelease);
+    window.addEventListener("touchend", onRelease);
+    window.addEventListener("touchcancel", onRelease);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("touchmove", onMove);
+      window.removeEventListener("mouseup", onRelease);
+      window.removeEventListener("touchend", onRelease);
+      window.removeEventListener("touchcancel", onRelease);
+    };
+  }, [handleDragMove, stopDrag]);
+
+  const handleClick = () => {
+    setIsEditing(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+  };
+
   return (
     <div className="app">
       {/* Fullscreen Batman Image */}
@@ -151,25 +281,40 @@ function App() {
         ))}
       </div>
 
-      {/* Sticky Note — BATMAN PROTOCOL */}
-      <aside className="sticky-note" role="note" aria-label="Batman Protocol">
+      {/* Sticky Note — BATMAN PROTOCOL (editable) */}
+      <aside
+        className={`sticky-note ${isDragging ? "dragging" : ""}`}
+        role="note"
+        aria-label="Batman Protocol"
+        onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
+        onClick={handleClick}
+        style={{
+          left: `${stickyPosition.x}px`,
+          top: `${stickyPosition.y}px`,
+        }}
+      >
         <h4>BATMAN PROTOCOL:</h4>
-        <ol>
-          <li>Train Strength</li>
-          <li>Learn to be Bored (Discipline)</li>
-          <li>Skill Stacking</li>
-          <li>Control your Inner Joker</li>
-          <li>Silence</li>
-        </ol>
+        <div className="sticky-editor">
+          <textarea
+            ref={textareaRef}
+            className="sticky-textarea"
+            value={stickyText}
+            onChange={(e) => setStickyText(e.target.value)}
+            onBlur={handleBlur}
+            rows={8}
+            spellCheck="false"
+            readOnly={!isEditing}
+            aria-label="Batman Protocol notes"
+          />
+        </div>
       </aside>
 
       {/* Overlay Controls */}
       <div
         className={`controls-overlay ${showControls ? "visible" : "hidden"}`}
       >
-        {/* Bottom Controls Bar */}
         <div className="bottom-bar">
-          {/* Audio Visualizer */}
           <div className="visualizer" id="audio-visualizer">
             {BARS.map((bar) => (
               <div
