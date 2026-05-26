@@ -1,8 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import './App.css'
-import batmanImg from '../batman_study.png'
+import { useState, useEffect, useRef, useCallback } from "react";
+import "./App.css";
+import batmanImg from "../batman_study.png";
 
-const YOUTUBE_VIDEO_ID = 'ZkfZvz_2bPE'
+const YOUTUBE_VIDEO_ID = "ZkfZvz_2bPE";
 
 // Visualizer bar config
 const BARS = Array.from({ length: 24 }, (_, i) => ({
@@ -11,41 +11,41 @@ const BARS = Array.from({ length: 24 }, (_, i) => ({
   maxH: Math.random() * 24 + 8,
   duration: (Math.random() * 0.6 + 0.3).toFixed(2),
   delay: (Math.random() * 0.5).toFixed(2),
-}))
+}));
 
 function App() {
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [isReady, setIsReady] = useState(false)
-  const [volume, setVolume] = useState(70)
-  const [showControls, setShowControls] = useState(true)
-  const playerRef = useRef(null)
-  const hideTimerRef = useRef(null)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [volume, setVolume] = useState(70);
+  const [showControls, setShowControls] = useState(true);
+  const playerRef = useRef(null);
+  const hideTimerRef = useRef(null);
 
   // Load YouTube IFrame API
   useEffect(() => {
     if (window.YT && window.YT.Player) {
-      createPlayer()
-      return
+      createPlayer();
+      return;
     }
 
-    const tag = document.createElement('script')
-    tag.src = 'https://www.youtube.com/iframe_api'
-    const firstScript = document.getElementsByTagName('script')[0]
-    firstScript.parentNode.insertBefore(tag, firstScript)
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScript = document.getElementsByTagName("script")[0];
+    firstScript.parentNode.insertBefore(tag, firstScript);
 
     window.onYouTubeIframeAPIReady = () => {
-      createPlayer()
-    }
+      createPlayer();
+    };
 
     return () => {
-      window.onYouTubeIframeAPIReady = null
-    }
-  }, [])
+      window.onYouTubeIframeAPIReady = null;
+    };
+  }, []);
 
   const createPlayer = useCallback(() => {
-    if (playerRef.current) return
+    if (playerRef.current) return;
 
-    playerRef.current = new window.YT.Player('yt-player', {
+    playerRef.current = new window.YT.Player("yt-player", {
       videoId: YOUTUBE_VIDEO_ID,
       playerVars: {
         autoplay: 0,
@@ -59,74 +59,77 @@ function App() {
       },
       events: {
         onReady: (event) => {
-          event.target.setVolume(70)
-          setIsReady(true)
+          event.target.setVolume(70);
+          setIsReady(true);
         },
         onStateChange: (event) => {
           if (event.data === window.YT.PlayerState.ENDED) {
-            event.target.playVideo()
+            event.target.playVideo();
           }
         },
       },
-    })
-  }, [])
+    });
+  }, []);
 
   const handlePlayPause = useCallback(() => {
-    if (!playerRef.current || !isReady) return
+    if (!playerRef.current || !isReady) return;
 
     if (isPlaying) {
-      playerRef.current.pauseVideo()
-      setIsPlaying(false)
+      playerRef.current.pauseVideo();
+      setIsPlaying(false);
     } else {
-      playerRef.current.playVideo()
-      setIsPlaying(true)
+      playerRef.current.playVideo();
+      setIsPlaying(true);
     }
-  }, [isPlaying, isReady])
+  }, [isPlaying, isReady]);
 
-  const handleVolumeChange = useCallback((e) => {
-    const newVolume = parseInt(e.target.value, 10)
-    setVolume(newVolume)
-    if (playerRef.current && isReady) {
-      playerRef.current.setVolume(newVolume)
-    }
-  }, [isReady])
+  const handleVolumeChange = useCallback(
+    (e) => {
+      const newVolume = parseInt(e.target.value, 10);
+      setVolume(newVolume);
+      if (playerRef.current && isReady) {
+        playerRef.current.setVolume(newVolume);
+      }
+    },
+    [isReady],
+  );
 
   // Auto-hide controls after inactivity
   useEffect(() => {
     const resetTimer = () => {
-      setShowControls(true)
-      clearTimeout(hideTimerRef.current)
+      setShowControls(true);
+      clearTimeout(hideTimerRef.current);
       hideTimerRef.current = setTimeout(() => {
-        if (isPlaying) setShowControls(false)
-      }, 3000)
-    }
+        if (isPlaying) setShowControls(false);
+      }, 3000);
+    };
 
-    window.addEventListener('mousemove', resetTimer)
-    window.addEventListener('touchstart', resetTimer)
+    window.addEventListener("mousemove", resetTimer);
+    window.addEventListener("touchstart", resetTimer);
 
     return () => {
-      window.removeEventListener('mousemove', resetTimer)
-      window.removeEventListener('touchstart', resetTimer)
-      clearTimeout(hideTimerRef.current)
-    }
-  }, [isPlaying])
+      window.removeEventListener("mousemove", resetTimer);
+      window.removeEventListener("touchstart", resetTimer);
+      clearTimeout(hideTimerRef.current);
+    };
+  }, [isPlaying]);
 
   // Always show controls when paused
   useEffect(() => {
-    if (!isPlaying) setShowControls(true)
-  }, [isPlaying])
+    if (!isPlaying) setShowControls(true);
+  }, [isPlaying]);
 
   // Keyboard shortcut: spacebar to toggle
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.code === 'Space' && e.target === document.body) {
-        e.preventDefault()
-        handlePlayPause()
+      if (e.code === "Space" && e.target === document.body) {
+        e.preventDefault();
+        handlePlayPause();
       }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handlePlayPause])
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handlePlayPause]);
 
   return (
     <div className="app">
@@ -148,8 +151,22 @@ function App() {
         ))}
       </div>
 
+      {/* Sticky Note — BATMAN PROTOCOL */}
+      <aside className="sticky-note" role="note" aria-label="Batman Protocol">
+        <h4>BATMAN PROTOCOL:</h4>
+        <ol>
+          <li>Train Strength</li>
+          <li>Learn to be Bored (Discipline)</li>
+          <li>Skill Stacking</li>
+          <li>Control your Inner Joker</li>
+          <li>Silence</li>
+        </ol>
+      </aside>
+
       {/* Overlay Controls */}
-      <div className={`controls-overlay ${showControls ? 'visible' : 'hidden'}`}>
+      <div
+        className={`controls-overlay ${showControls ? "visible" : "hidden"}`}
+      >
         {/* Bottom Controls Bar */}
         <div className="bottom-bar">
           {/* Audio Visualizer */}
@@ -157,14 +174,14 @@ function App() {
             {BARS.map((bar) => (
               <div
                 key={bar.id}
-                className={`visualizer-bar ${isPlaying ? 'is-playing' : 'is-paused'}`}
+                className={`visualizer-bar ${isPlaying ? "is-playing" : "is-paused"}`}
                 style={{
-                  '--min-h': `${bar.minH}px`,
-                  '--max-h': `${bar.maxH}px`,
-                  '--duration': `${bar.duration}s`,
+                  "--min-h": `${bar.minH}px`,
+                  "--max-h": `${bar.maxH}px`,
+                  "--duration": `${bar.duration}s`,
                   animationDuration: `${bar.duration}s`,
                   animationDelay: `${bar.delay}s`,
-                  height: isPlaying ? undefined : '4px',
+                  height: isPlaying ? undefined : "4px",
                 }}
               />
             ))}
@@ -173,12 +190,12 @@ function App() {
           {/* Center Play/Pause */}
           <div className="center-controls">
             <button
-              className={`play-btn ${isPlaying ? 'is-playing' : ''}`}
+              className={`play-btn ${isPlaying ? "is-playing" : ""}`}
               onClick={handlePlayPause}
               id="play-pause-button"
-              aria-label={isPlaying ? 'Pause' : 'Play'}
+              aria-label={isPlaying ? "Pause" : "Play"}
               disabled={!isReady}
-              title={!isReady ? 'Loading...' : isPlaying ? 'Pause' : 'Play'}
+              title={!isReady ? "Loading..." : isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
                 <div className="btn-icon icon-pause">
@@ -190,8 +207,8 @@ function App() {
               )}
             </button>
 
-            <p className={`status-label ${isPlaying ? 'is-playing' : ''}`}>
-              {!isReady ? 'Loading...' : isPlaying ? 'Now Playing' : 'Paused'}
+            <p className={`status-label ${isPlaying ? "is-playing" : ""}`}>
+              {!isReady ? "Loading..." : isPlaying ? "Now Playing" : "Paused"}
             </p>
           </div>
 
@@ -235,7 +252,7 @@ function App() {
               onChange={handleVolumeChange}
               id="volume-slider"
               aria-label="Volume"
-              style={{ '--volume-pct': `${volume}%` }}
+              style={{ "--volume-pct": `${volume}%` }}
             />
             <span className="volume-value">{volume}%</span>
           </div>
@@ -248,11 +265,11 @@ function App() {
       </div>
 
       {/* Footer hint */}
-      <div className={`footer ${showControls ? 'visible' : 'hidden'}`}>
+      <div className={`footer ${showControls ? "visible" : "hidden"}`}>
         Press Space to play / pause
       </div>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;

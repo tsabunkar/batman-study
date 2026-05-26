@@ -6,6 +6,83 @@
   overflow: hidden;
 }
 
+:root {
+  --accent-gold: #f5c518;
+  --accent-gold-dim: rgba(245,197,24,0.12);
+  --bg-gradient: linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.9));
+}
+
+/* ===== Sticky Note (Top-left) ===== */
+.sticky-note {
+  position: fixed;
+  top: 1.25rem;
+  left: 1.25rem;
+  z-index: 30;
+  width: 260px;
+  max-width: calc(100vw - 2.25rem);
+  background: linear-gradient(180deg, #fff8dc, #fff3b8);
+  color: #0b0b0b;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  box-shadow: 0 10px 30px rgba(2,2,6,0.6), 0 2px 6px rgba(0,0,0,0.25);
+  border: 1px solid rgba(0,0,0,0.06);
+  font-weight: 600;
+  pointer-events: auto;
+  transform-origin: left top;
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+
+.sticky-note:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 16px 40px rgba(2,2,6,0.7);
+}
+
+.sticky-note h4 {
+  margin: 0 0 0.45rem 0;
+  font-size: 0.85rem;
+  color: #2b2b2b;
+  letter-spacing: 0.02em;
+}
+
+.sticky-note ol {
+  margin: 0;
+  padding-left: 1.05rem;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  color: rgba(12,12,12,0.9);
+}
+
+.sticky-note li {
+  margin: 0.35rem 0;
+}
+
+/* subtle folded corner */
+.sticky-note:before {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  width: 16px;
+  height: 16px;
+  background: linear-gradient(45deg, rgba(0,0,0,0.06), rgba(255,255,255,0.08));
+  transform: rotate(12deg);
+  border-radius: 3px;
+  opacity: 0.85;
+}
+
+@media (max-width: 700px) {
+  .sticky-note {
+    top: 0.9rem;
+    left: 0.9rem;
+    width: 44vw;
+    padding: 0.7rem 0.8rem;
+    border-radius: 8px;
+  }
+
+  .sticky-note h4 { font-size: 0.78rem; }
+  .sticky-note ol { font-size: 0.72rem; padding-left: 0.9rem; }
+}
+
 /* ===== Fullscreen Background Image ===== */
 .fullscreen-bg {
   position: fixed;
