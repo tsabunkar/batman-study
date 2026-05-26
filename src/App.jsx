@@ -133,10 +133,10 @@ function App() {
 
   const STICKY_TEXT_KEY = "batman_protocol_text";
   const STICKY_POS_KEY = "batman_protocol_pos";
-  const defaultStickyText = `Train Strength
-Learn to be Bored (Discipline)
-Skill Stacking
-Control your inner Joker
+  const defaultStickyText = `Train strength
+Learn to be bored (discipline)
+Skill stacking
+Control your inner joker
 Silence`;
   const defaultStickyPosition = { x: 20, y: 20 };
 
@@ -294,7 +294,7 @@ Silence`;
           top: `${stickyPosition.y}px`,
         }}
       >
-        <h4>BATMAN PROTOCOL:</h4>
+        <h4>BATMAN PROTOCOL</h4>
         <div className="sticky-editor">
           <textarea
             ref={textareaRef}
