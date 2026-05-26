@@ -4,9 +4,11 @@ A React + Vite web app built around the experience of working with handpan music
 
 ## What this app is
 
-`batman-study` is a small creative project focused on handpan music practice and exploration.
-It is designed to showcase content, sound, or guided study related to handpan playing,
-with a simple static React frontend deployed to AWS S3 behind CloudFront.
+`batman-study` is a minimalist creative space where handpan music groove blocks noise and distractions, letting you work with Batman-level focus and flow.
+
+## Link to use-
+
+https://d2sp3xp56r8kh5.cloudfront.net/
 
 ## Key features
 
