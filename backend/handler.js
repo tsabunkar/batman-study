@@ -25,6 +25,43 @@ const getClientIp = (event) => {
   );
 };
 
+// Fetch IP geolocation data
+const getIpInfo = async (ip) => {
+  console.log("Fetching IP info for:", ip);
+  const defaultInfo = {
+    country: "Unknown",
+    region: "Unknown",
+    city: "Unknown",
+    zipcode: "Unknown",
+  };
+  if (
+    !ip ||
+    ip === "unknown" ||
+    ip === "127.0.0.1" ||
+    ip === "::1" ||
+    ip.startsWith("192.168.") ||
+    ip.startsWith("10.")
+  ) {
+    return defaultInfo;
+  }
+  try {
+    const response = await fetch(`http://ip-api.com/json/${ip}`);
+    if (!response.ok) return defaultInfo;
+    const data = await response.json();
+    if (data.status === "success") {
+      return {
+        country: data.country || "Unknown",
+        region: data.regionName || "Unknown",
+        city: data.city || "Unknown",
+        zipcode: data.zip || "Unknown",
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching IP info:", error);
+  }
+  return defaultInfo;
+};
+
 // Track play button click
 export const trackPlayClick = async (event) => {
   try {
@@ -41,16 +78,26 @@ export const trackPlayClick = async (event) => {
 
     let response;
 
+    // Fetch IP info
+    const ipInfo = await getIpInfo(ipAddress);
+
     if (existingRecord.Item) {
       // Update existing record
       const updateParams = {
         TableName: TABLE_NAME,
         Key: { ipAddress },
         UpdateExpression:
-          "SET clickCount = clickCount + :inc, lastClickedAt = :now",
+          "SET clickCount = clickCount + :inc, lastClickedAt = :now, country = :country, #region = :region, city = :city, zipcode = :zipcode",
+        ExpressionAttributeNames: {
+          "#region": "region",
+        },
         ExpressionAttributeValues: {
           ":inc": 1,
           ":now": now,
+          ":country": ipInfo.country,
+          ":region": ipInfo.region,
+          ":city": ipInfo.city,
+          ":zipcode": ipInfo.zipcode,
         },
         ReturnValues: "ALL_NEW",
       };
@@ -66,6 +113,10 @@ export const trackPlayClick = async (event) => {
         clickCount: 1,
         firstVisitedAt: now,
         lastClickedAt: now,
+        country: ipInfo.country,
+        region: ipInfo.region,
+        city: ipInfo.city,
+        zipcode: ipInfo.zipcode,
       };
 
       const putParams = {
@@ -128,6 +179,10 @@ export const getAnalytics = async (event) => {
           clickCount: item.clickCount,
           firstVisitedAt: item.firstVisitedAt,
           lastClickedAt: item.lastClickedAt,
+          country: item.country || "Unknown",
+          region: item.region || "Unknown",
+          city: item.city || "Unknown",
+          zipcode: item.zipcode || "Unknown",
         })),
     };
 
