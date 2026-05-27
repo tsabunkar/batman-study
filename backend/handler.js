@@ -31,6 +31,7 @@ const getIpInfo = async (ip) => {
   const defaultInfo = {
     country: "Unknown",
     region: "Unknown",
+    district: "Unknown",
     city: "Unknown",
     zipcode: "Unknown",
   };
@@ -52,6 +53,7 @@ const getIpInfo = async (ip) => {
       return {
         country: data.country || "Unknown",
         region: data.regionName || "Unknown",
+        district: data.district || "Unknown",
         city: data.city || "Unknown",
         zipcode: data.zip || "Unknown",
       };
@@ -87,7 +89,7 @@ export const trackPlayClick = async (event) => {
         TableName: TABLE_NAME,
         Key: { ipAddress },
         UpdateExpression:
-          "SET clickCount = clickCount + :inc, lastClickedAt = :now, country = :country, #region = :region, city = :city, zipcode = :zipcode",
+          "SET clickCount = clickCount + :inc, lastClickedAt = :now, country = :country, #region = :region, district = :district, city = :city, zipcode = :zipcode",
         ExpressionAttributeNames: {
           "#region": "region",
         },
@@ -96,6 +98,7 @@ export const trackPlayClick = async (event) => {
           ":now": now,
           ":country": ipInfo.country,
           ":region": ipInfo.region,
+          ":district": ipInfo.district,
           ":city": ipInfo.city,
           ":zipcode": ipInfo.zipcode,
         },
@@ -115,6 +118,7 @@ export const trackPlayClick = async (event) => {
         lastClickedAt: now,
         country: ipInfo.country,
         region: ipInfo.region,
+        district: ipInfo.district,
         city: ipInfo.city,
         zipcode: ipInfo.zipcode,
       };
@@ -181,6 +185,7 @@ export const getAnalytics = async (event) => {
           lastClickedAt: item.lastClickedAt,
           country: item.country || "Unknown",
           region: item.region || "Unknown",
+          district: item.district || "Unknown",
           city: item.city || "Unknown",
           zipcode: item.zipcode || "Unknown",
         })),
