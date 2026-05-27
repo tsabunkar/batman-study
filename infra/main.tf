@@ -219,11 +219,9 @@ resource "null_resource" "app_deploy" {
 # ============================================================
 
 resource "aws_dynamodb_table" "play_analytics" {
-  name             = "${var.project_name}-play-analytics"
-  billing_mode     = "PAY_PER_REQUEST"
-  hash_key         = "ipAddress"
-  stream_enabled   = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
+  name         = "${var.project_name}-play-analytics"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "ipAddress"
 
   attribute {
     name = "ipAddress"
