@@ -1,11 +1,28 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import "./App.css";
-import batmanImg from "../batman_study.png";
+import batmanCalmImg from "../batman_study.png";
+import batmanAggressiveImg from "../batman_agressive.png";
 
-const YOUTUBE_VIDEO_ID = "ZkfZvz_2bPE";
 const ANALYTICS_API_ENDPOINT =
   import.meta.env.VITE_ANALYTICS_API ||
   "https://your-api-gateway-url.execute-api.region.amazonaws.com/prod";
+
+const MODE_KEY = "batman_mode";
+
+const MODES = {
+  calm: {
+    id: "calm",
+    label: "Calm Flow",
+    image: batmanCalmImg,
+    videoId: "ZkfZvz_2bPE",
+  },
+  aggressive: {
+    id: "aggressive",
+    label: "Aggressive",
+    image: batmanAggressiveImg,
+    videoId: "YNc7hA5Macg",
+  },
+};
 
 // Visualizer bar config
 const BARS = Array.from({ length: 24 }, (_, i) => ({
@@ -16,13 +33,43 @@ const BARS = Array.from({ length: 24 }, (_, i) => ({
   delay: (Math.random() * 0.5).toFixed(2),
 }));
 
+// Record a track's current playback second so it can be resumed later
+const capturePosition = (player, videoId, store) => {
+  try {
+    const t = player?.getCurrentTime();
+    if (typeof t === "number" && Number.isFinite(t)) {
+      store[videoId] = t;
+    }
+  } catch (e) {
+    // player mid-load; skip this sample
+  }
+};
+
 function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [volume, setVolume] = useState(70);
   const [showControls, setShowControls] = useState(true);
+  const [mode, setMode] = useState(() => {
+    try {
+      const stored = localStorage.getItem(MODE_KEY);
+      return stored && MODES[stored] ? stored : "calm";
+    } catch (e) {
+      return "calm";
+    }
+  });
   const playerRef = useRef(null);
+  const loadedVideoRef = useRef(MODES[mode].videoId);
+  const positionsRef = useRef({});
   const hideTimerRef = useRef(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MODE_KEY, mode);
+    } catch (e) {
+      // ignore
+    }
+  }, [mode]);
 
   // Load YouTube IFrame API
   useEffect(() => {
@@ -48,12 +95,14 @@ function App() {
   const createPlayer = useCallback(() => {
     if (playerRef.current) return;
 
+    const { videoId } = MODES[mode];
+
     playerRef.current = new window.YT.Player("yt-player", {
-      videoId: YOUTUBE_VIDEO_ID,
+      videoId,
       playerVars: {
         autoplay: 0,
         loop: 1,
-        playlist: YOUTUBE_VIDEO_ID,
+        playlist: videoId,
         controls: 0,
         disablekb: 1,
         fs: 0,
@@ -72,6 +121,50 @@ function App() {
         },
       },
     });
+  }, [mode]);
+
+  // Swap background track when mode changes, resuming each song where it
+  // left off. playing -> loadVideoById keeps playback seamless; paused -> cue only
+  useEffect(() => {
+    const nextVideoId = MODES[mode].videoId;
+    if (!playerRef.current || !isReady) return;
+    if (loadedVideoRef.current === nextVideoId) return;
+
+    capturePosition(
+      playerRef.current,
+      loadedVideoRef.current,
+      positionsRef.current,
+    );
+
+    const startSeconds = positionsRef.current[nextVideoId] || 0;
+    loadedVideoRef.current = nextVideoId;
+
+    const loadOpts = { videoId: nextVideoId, startSeconds };
+    if (isPlaying) {
+      playerRef.current.loadVideoById(loadOpts);
+    } else {
+      playerRef.current.cueVideoById(loadOpts);
+    }
+  }, [mode, isReady, isPlaying]);
+
+  // Sample the active track's position every 3s so resumes stay accurate
+  // even after a natural loop restart
+  useEffect(() => {
+    if (!isPlaying || !isReady) return;
+
+    const sampler = setInterval(() => {
+      capturePosition(
+        playerRef.current,
+        loadedVideoRef.current,
+        positionsRef.current,
+      );
+    }, 3000);
+
+    return () => clearInterval(sampler);
+  }, [isPlaying, isReady]);
+
+  const handleModeChange = useCallback((nextMode) => {
+    setMode(nextMode);
   }, []);
 
   const handlePlayPause = useCallback(() => {
@@ -272,15 +365,17 @@ Silence`;
   };
 
   return (
-    <div className="app">
-      {/* Fullscreen Batman Image */}
+    <div className="app" data-mode={mode}>
+      {/* Fullscreen Batman Image (both stacked for smooth crossfade) */}
       <div className="fullscreen-bg">
-        <img
-          src={batmanImg}
-          alt="Batman studying at the Batcomputer"
-          className="bg-image"
-          id="batman-hero-image"
-        />
+        {Object.values(MODES).map((m) => (
+          <img
+            key={m.id}
+            src={m.image}
+            alt={`Batman — ${m.label} mode`}
+            className={`bg-image ${mode === m.id ? "active" : ""}`}
+          />
+        ))}
         <div className="bg-darken" />
       </div>
 
@@ -339,6 +434,20 @@ Silence`;
                   height: isPlaying ? undefined : "4px",
                 }}
               />
+            ))}
+          </div>
+
+          {/* Mode Toggle */}
+          <div className="mode-toggle" role="group" aria-label="Batman mode">
+            {Object.values(MODES).map((m) => (
+              <button
+                key={m.id}
+                className={`mode-btn ${mode === m.id ? "active" : ""}`}
+                onClick={() => handleModeChange(m.id)}
+                aria-pressed={mode === m.id}
+              >
+                {m.label}
+              </button>
             ))}
           </div>
 
