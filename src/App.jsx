@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import "./App.css";
 import batmanCalmImg from "../batman_study.png";
 import batmanAggressiveImg from "../batman_agressive.png";
+import PomodoroTimer from "./components/PomodoroTimer";
 
 const ANALYTICS_API_ENDPOINT =
   import.meta.env.VITE_ANALYTICS_API ||
@@ -414,6 +415,9 @@ Silence`;
           />
         </div>
       </aside>
+
+      {/* Pomodoro Timer (Top-right) */}
+      <PomodoroTimer />
 
       {/* Overlay Controls */}
       <div
