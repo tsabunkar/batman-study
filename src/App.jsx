@@ -187,6 +187,12 @@ function App() {
     }
   }, [isPlaying, isReady]);
 
+  const handleFocusComplete = useCallback(() => {
+    if (!playerRef.current || !isReady || !isPlaying) return;
+    playerRef.current.pauseVideo();
+    setIsPlaying(false);
+  }, [isPlaying, isReady]);
+
   const handleVolumeChange = useCallback(
     (e) => {
       const newVolume = parseInt(e.target.value, 10);
@@ -417,7 +423,7 @@ Silence`;
       </aside>
 
       {/* Pomodoro Timer (Top-right) */}
-      <PomodoroTimer />
+      <PomodoroTimer onFocusComplete={handleFocusComplete} />
 
       {/* Overlay Controls */}
       <div

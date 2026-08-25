@@ -722,7 +722,10 @@
 }
 
 .pomodoro-controls {
+  width: 100%;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 0.45rem;
   margin-top: 0.15rem;
 }
@@ -741,6 +744,10 @@
   cursor: pointer;
   outline: none;
   transition: all 0.3s ease;
+}
+
+.pomodoro-btn.alarm-stop {
+  flex-basis: 100%;
 }
 
 .pomodoro-btn:hover {

@@ -27,19 +27,22 @@ const loadCompletedToday = () => {
   }
 };
 
-export default function PomodoroTimer() {
+export default function PomodoroTimer({ onFocusComplete }) {
   const [phase, setPhase] = useState("idle");
   const [remaining, setRemaining] = useState(PHASES.focus.seconds);
   const [isRunning, setIsRunning] = useState(false);
   const [cycles, setCycles] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [completedToday, setCompletedToday] = useState(loadCompletedToday);
+  const [alarmActive, setAlarmActive] = useState(false);
 
   const endAtRef = useRef(null);
   const phaseRef = useRef(phase);
   const cyclesRef = useRef(cycles);
   const lastAdvanceRef = useRef(0);
   const audioCtxRef = useRef(null);
+  const alarmIntervalRef = useRef(null);
+  const pendingBreakRef = useRef(false);
 
   useEffect(() => {
     phaseRef.current = phase;
@@ -81,6 +84,50 @@ export default function PomodoroTimer() {
     });
   }, []);
 
+  const playAlarmBeep = useCallback(() => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "square";
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.25);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.3);
+  }, []);
+
+  const clearAlarm = useCallback(() => {
+    if (alarmIntervalRef.current) {
+      clearInterval(alarmIntervalRef.current);
+      alarmIntervalRef.current = null;
+    }
+    setAlarmActive(false);
+  }, []);
+
+  const startAlarm = useCallback(() => {
+    clearAlarm();
+    playAlarmBeep();
+    alarmIntervalRef.current = setInterval(playAlarmBeep, 1000);
+    setAlarmActive(true);
+  }, [clearAlarm, playAlarmBeep]);
+
+  const stopAlarm = useCallback(() => {
+    clearAlarm();
+    if (pendingBreakRef.current) {
+      pendingBreakRef.current = false;
+      endAtRef.current = Date.now() + remaining * 1000;
+      setIsRunning(true);
+    }
+  }, [clearAlarm, remaining]);
+
+  useEffect(() => clearAlarm, [clearAlarm]);
+
   const advance = useCallback(
     (natural) => {
       const nowMs = Date.now();
@@ -105,7 +152,17 @@ export default function PomodoroTimer() {
             }
             return updated;
           });
-          playChime();
+          startAlarm();
+          onFocusComplete?.();
+          phaseRef.current =
+            nextCycles > 0 && nextCycles % CYCLES_BEFORE_LONG_BREAK === 0
+              ? "longBreak"
+              : "shortBreak";
+          setPhase(phaseRef.current);
+          setRemaining(PHASES[phaseRef.current].seconds);
+          pendingBreakRef.current = true;
+          setIsRunning(false);
+          return;
         }
 
         const next =
@@ -125,7 +182,7 @@ export default function PomodoroTimer() {
       setRemaining(PHASES.focus.seconds);
       endAtRef.current = Date.now() + PHASES.focus.seconds * 1000;
     },
-    [playChime],
+    [onFocusComplete, playChime, startAlarm],
   );
 
   useEffect(() => {
@@ -182,13 +239,15 @@ export default function PomodoroTimer() {
   }, [advance]);
 
   const handleReset = useCallback(() => {
+    clearAlarm();
+    pendingBreakRef.current = false;
     setIsRunning(false);
     phaseRef.current = "idle";
     setPhase("idle");
     setRemaining(PHASES.focus.seconds);
     cyclesRef.current = 0;
     setCycles(0);
-  }, []);
+  }, [clearAlarm]);
 
   const withBlur = (fn) => (event) => {
     event.currentTarget.blur();
@@ -199,7 +258,9 @@ export default function PomodoroTimer() {
   const shownSeconds = phaseMeta ? remaining : PHASES.focus.seconds;
   const progress = phaseMeta ? 1 - remaining / phaseMeta.seconds : 0;
   const dotsFilled =
-    phase === "longBreak" ? CYCLES_BEFORE_LONG_BREAK : cycles % CYCLES_BEFORE_LONG_BREAK;
+    phase === "longBreak"
+      ? CYCLES_BEFORE_LONG_BREAK
+      : cycles % CYCLES_BEFORE_LONG_BREAK;
 
   return (
     <div className="pomodoro">
@@ -229,7 +290,11 @@ export default function PomodoroTimer() {
       </button>
 
       {expanded && (
-        <div className="pomodoro-panel" role="timer" aria-label="Pomodoro timer">
+        <div
+          className="pomodoro-panel"
+          role="timer"
+          aria-label="Pomodoro timer"
+        >
           <p className="pomodoro-status">
             {phaseMeta
               ? isRunning
@@ -256,18 +321,39 @@ export default function PomodoroTimer() {
             ))}
           </div>
           <div className="pomodoro-controls">
+            {alarmActive && (
+              <button
+                type="button"
+                className="pomodoro-btn primary alarm-stop"
+                onClick={withBlur(stopAlarm)}
+              >
+                Stop Alarm
+              </button>
+            )}
             <button
               type="button"
               className="pomodoro-btn primary"
               onClick={withBlur(handleStartPause)}
             >
-              {isRunning ? "Pause" : "Start"}
+              {isRunning
+                ? "Pause"
+                : phase === "idle"
+                  ? "Start Focus"
+                  : "Resume"}
             </button>
-            <button type="button" className="pomodoro-btn" onClick={withBlur(handleSkip)}>
-              Skip
+            <button
+              type="button"
+              className="pomodoro-btn"
+              onClick={withBlur(handleSkip)}
+            >
+              Skip Phase
             </button>
-            <button type="button" className="pomodoro-btn" onClick={withBlur(handleReset)}>
-              Reset
+            <button
+              type="button"
+              className="pomodoro-btn"
+              onClick={withBlur(handleReset)}
+            >
+              Reset Timer
             </button>
           </div>
           <p className="pomodoro-stats">{completedToday} focused today</p>
